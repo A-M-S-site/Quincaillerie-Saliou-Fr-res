@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saliou&Frères Quincaillerie - Facturation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+  body { background: #f4f6fa; color: #2c3e50; }
+  
+  header {
+    background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+    color: white; padding: 20px 30px;
+    display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 10px;
+  }
+  header h1 { font-size: 1.6rem; }
+  header .store-name { font-size: 0.9rem; opacity: 0.95; }
+  
+  .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+  
+  .tabs { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+  .tab-btn {
+    padding: 12px 24px; border: none; background: white; color: #555;
+    border-radius: 10px; cursor: pointer; font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06); transition: 0.2s;
+  }
+  .tab-btn:hover { transform: translateY(-2px); }
+  .tab-btn.active {
+    background: linear-gradient(135deg, #d35400 0%, #e67e22 100%);
+    color: white;
+  }
+  
+  .panel { display: none; animation: fadeIn 0.3s; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  
+  .card {
+    background: white; border-radius: 12px; padding: 25px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06); margin-bottom: 20px;
+  }
+  
+  h2 { margin-bottom: 20px; color: #333; font-size: 1.4rem; }
+  h3 { margin-bottom: 15px; color: #555; font-size: 1.1rem; }
+  
+  .form-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;
+  }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group label { margin-bottom: 6px; font-weight: 600; font-size: 0.85rem; color: #555; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 10px 12px; border: 2px solid #e1e5eb; border-radius: 8px;
+    font-size: 0.95rem; transition: 0.2s; font-family: inherit;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none; border-color: #e67e22;
+  }
+  .form-group.full { grid-column: 1 / -1; }
+  
+  .btn {
+    padding: 11px 22px; border: none; border-radius: 8px; cursor: pointer;
+    font-weight: 600; font-size: 0.95rem; transition: 0.2s;
+  }
+  .btn-primary { background: linear-gradient(135deg, #d35400 0%, #e67e22 100%); color: white; }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(230,126,34,0.4); }
+  .btn-success { background: #27ae60; color: white; }
+  .btn-success:hover { background: #219653; }
+  .btn-danger { background: #e74c3c; color: white; padding: 6px 12px; font-size: 0.8rem; }
+  .btn-danger:hover { background: #c0392b; }
+  .btn-secondary { background: #ecf0f1; color: #333; }
+  .btn-secondary:hover { background: #d5dbdd; }
+  .btn-small { padding: 6px 14px; font-size: 0.85rem; }
+  
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  table th {
+    background: #f8f9fc; padding: 12px; text-align: left;
+    font-size: 0.85rem; color: #666; border-bottom: 2px solid #e1e5eb;
+  }
+  table td { padding: 12px; border-bottom: 1px solid #eef0f4; font-size: 0.9rem; }
+  table tr:hover td { background: #fafbff; }
+  
+  .empty-state { text-align: center; padding: 40px; color: #999; }
+  
+  .item-row {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto;
+    gap: 10px; margin-bottom: 10px; align-items: center;
+  }
+  .item-row input, .item-row select {
+    padding: 9px; border: 2px solid #e1e5eb; border-radius: 8px; font-size: 0.9rem;
+  }
+  .item-row input:focus { outline: none; border-color: #e67e22; }
+  
+  .totals {
+    margin-top: 20px; padding: 20px; background: #f8f9fc;
+    border-radius: 10px; text-align: right;
+  }
+  .totals .line { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.95rem; }
+  .totals .grand-total {
+    font-size: 1.3rem; font-weight: 700; color: #d35400;
+    border-top: 2px solid #e1e5eb; padding-top: 12px; margin-top: 8px;
+  }
+  
+  .toast {
+    position: fixed; top: 20px; right: 20px; padding: 15px 25px;
+    background: #27ae60; color: white; border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2); z-index: 1000;
+    animation: slideIn 0.3s; font-weight: 600;
+  }
+  .toast.error { background: #e74c3c; }
+  @keyframes slideIn { from { transform: translateX(400px); } to { transform: translateX(0); } }
+  
+  .invoice-preview {
+    background: white; padding: 40px; border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 850px; margin: 0 auto;
+    position: relative;
+  }
+  .invoice-header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 3px solid #d35400; padding-bottom: 20px; gap: 20px; flex-wrap: wrap;}
+  .invoice-header h2 { color: #d35400; font-size: 2rem; }
+  .invoice-header .brand { color: #d35400; font-weight: 700; font-size: 1.3rem; margin-bottom: 5px;}
+  .invoice-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+  .invoice-info h4 { color: #888; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 8px; }
+  .invoice-info p { margin: 3px 0; font-size: 0.9rem; }
+  .invoice-table th { background: #d35400; color: white; }
+  .invoice-table td { padding: 10px; }
+  .invoice-totals { text-align: right; margin-top: 20px; padding-top: 20px; border-top: 2px solid #eef0f4; }
+  .invoice-totals .line { padding: 5px 0; }
+  .invoice-totals .total { font-size: 1.4rem; font-weight: 700; color: #d35400; }
+  
+  .signature-zone {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-top: 40px; padding-top: 20px; border-top: 1px dashed #ccc;
+  }
+  .signature-label { font-size: 0.85rem; color: #666; }
+  .stamp {
+    width: 170px; height: 170px; border: 4px double #b03030;
+    border-radius: 50%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; color: #b03030;
+    transform: rotate(-12deg); text-align: center; padding: 10px;
+    font-weight: 700; opacity: 0.85;
+  }
+  .stamp .stamp-top { font-size: 0.68rem; letter-spacing: 1px; }
+  .stamp .stamp-main { font-size: 1.15rem; margin: 6px 0; font-family: 'Georgia', serif; }
+  .stamp .stamp-bottom { font-size: 0.65rem; letter-spacing: 0.5px; }
+  .stamp .stamp-address {
+    font-size: 0.55rem;
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+    font-style: italic;
+    max-width: 130px;
+    line-height: 1.1;
+  }
+  .signature-line { width: 200px; border-bottom: 1px solid #333; margin-top: 40px; text-align: center; padding-top: 5px; font-size: 0.8rem; color: #666;}
+  
+  .actions-bar { display: flex; gap: 10px; justify-content: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+  
+  @media (max-width: 700px) {
+    .item-row { grid-template-columns: 1fr 1fr; }
+    .invoice-info { grid-template-columns: 1fr; }
+    .invoice-preview { padding: 20px; }
+    .signature-zone { flex-direction: column; gap: 20px; align-items: center; }
+  }
+  
+  @media print {
+    header, .tabs, .actions-bar, .no-print { display: none !important; }
+    .container { margin: 0; padding: 0; max-width: 100%; }
+    .invoice-preview { box-shadow: none; padding: 20px; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🔧 Saliou Quincaillerie</h1>
+    <div class="store-name">📞 Tél : 77 232 53 18</div>
+    <div class="store-name">📞 Tél : 77 519 96 98</div>
+    <div class="store-name">✉️ Email : saliouquincaillerie@gmail.com</div>
+    <div class="store-name">📍 Tamba, Qrt: Gourel Diadié en face Garage Ousseynou</div>
+  </div>
+  <button class="btn btn-secondary btn-small" onclick="openSettings()">⚙️ Paramètres</button>
+</header>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('new-invoice')">➕ Nouvelle facture</button>
+    <button class="tab-btn" onclick="switchTab('invoices')">📄 Factures</button>
+    <button class="tab-btn" onclick="switchTab('clients')">👥 Clients</button>
+    <button class="tab-btn" onclick="switchTab('products')">📦 Produits</button>
+  </div>
+
+  <!-- ============ NEW INVOICE ============ -->
+  <div class="panel active" id="new-invoice">
+    <div class="card">
+      <h2>Créer une facture</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>N° Facture</label>
+          <input type="text" id="invNumber" readonly>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="invDate">
+        </div>
+        <div class="form-group">
+          <label>Client</label>
+          <select id="invClient">
+            <option value="">-- Sélectionner --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>TVA (%)</label>
+          <input type="number" id="invTVA" value="18" min="0" max="100" step="0.1">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Articles</h3>
+      <div id="itemsContainer"></div>
+      <button class="btn btn-secondary btn-small" onclick="addItemRow()" style="margin-top:10px">+ Ajouter un article</button>
+      
+      <div class="totals">
+        <div class="line"><span>Sous-total HT :</span><span id="subHT">0 FCFA</span></div>
+        <div class="line"><span>TVA :</span><span id="tvaAmount">0 FCFA</span></div>
+        <div class="line grand-total"><span>TOTAL TTC :</span><span id="totalTTC">0 FCFA</span></div>
+      </div>
+      
+      <div class="form-group full" style="margin-top:20px">
+        <label>Notes (optionnel)</label>
+        <textarea id="invNotes" rows="2" placeholder="Conditions de paiement, remerciements..."></textarea>
+      </div>
+      
+      <div class="actions-bar" style="margin-top:20px">
+        <button class="btn btn-primary" onclick="generateInvoice()">💾 Enregistrer & Aperçu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ INVOICES LIST ============ -->
+  <div class="panel" id="invoices">
+    <div class="card">
+      <h2>Mes factures</h2>
+      <div id="invoicesList"></div>
+    </div>
+  </div>
+
+  <!-- ============ CLIENTS ============ -->
+  <div class="panel" id="clients">
+    <div class="card">
+      <h2>Ajouter un client</h2>
+      <div class="form-grid">
+        <div class="form-group"><label>Nom complet *</label><input id="clName" type="text"></div>
+        <div class="form-group"><label>Téléphone</label><input id="clPhone" type="tel"></div>
+        <div class="form-group"><label>Adresse</label><input id="clAddress" type="text"></div>
+      </div>
+      <div style="margin-top:15px">
+        <button class="btn btn-primary" onclick="addClient()">Ajouter client</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Liste des clients</h3>
+      <div id="clientsList"></div>
+    </div>
+  </div>
+
+  <!-- ============ PRODUCTS ============ -->
+  <div class="panel" id="products">
+    <div class="card">
+      <h2>Ajouter un produit</h2>
+      <div class="form-grid">
+        <div class="form-group"><label>Désignation *</label><input id="prName" type="text"></div>
+        <div class="form-group"><label>Prix HT (FCFA) *</label><input id="prPrice" type="number" step="1" min="0"></div>
+        <div class="form-group"><label>Unité</label>
+          <select id="prUnit">
+            <option value="unité">unité</option>
+            <option value="pièce">pièce</option>
+            <option value="kg">kg</option>
+            <option value="mètre">mètre</option>
+            <option value="sachet">sachet</option>
+            <option value="carton">carton</option>
+            <option value="forfait">forfait</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:15px">
+        <button class="btn btn-primary" onclick="addProduct()">Ajouter produit</button>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Liste des produits</h3>
+      <div id="productsList"></div>
+    </div>
+  </div>
+
+  <!-- ============ INVOICE VIEW ============ -->
+  <div class="panel" id="invoice-view">
+    <div class="actions-bar no-print">
+      <button class="btn btn-secondary" onclick="switchTab('invoices')">← Retour</button>
+      <button class="btn btn-success" onclick="window.print()">🖨️ Imprimer / PDF</button>
+    </div>
+    <div id="invoiceRender"></div>
+  </div>
+</div>
+
+<script>
+/* ================= CONFIGURATION PAR DÉFAUT ================= */
+const DEFAULT_SETTINGS = {
+  storeName: 'Saliou & Frères Quincaillerie',
+  storePhone: '77 519 96 98',
+  storePhone: '77 232 53 18',
+  storeAddress: 'Tamba, Qrt: Gourel Diadié en face Garage Ousseynou',
+  storeEmail: 'saliouquincaillerie@gmail.com',
+  stampText: 'Saliou&Frères'
+};
+
+/* ================= STORAGE ================= */
+const DB = {
+  get: (k, d=[]) => {
+    try { const v = JSON.parse(localStorage.getItem('saliou_'+k)); return v !== null ? v : d; }
+    catch(e) { return d; }
+  },
+  set: (k, v) => localStorage.setItem('saliou_'+k, JSON.stringify(v))
+};
+
+let settings = DB.get('settings', DEFAULT_SETTINGS);
+let clients = DB.get('clients');
+let products = DB.get('products');
+let invoices = DB.get('invoices');
+
+/* ================= UTILS ================= */
+function toast(msg, isError=false) {
+  const t = document.createElement('div');
+  t.className = 'toast' + (isError ? ' error' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+function fmt(n) {
+  const num = Math.round(Number(n) || 0);
+  return num.toLocaleString('fr-FR').replace(/\u202f|\u00a0/g, ' ') + ' FCFA';
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ================= TABS ================= */
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  const tabs = ['new-invoice','invoices','clients','products'];
+  const idx = tabs.indexOf(name);
+  if (idx >= 0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  
+  if (name === 'invoices') renderInvoicesList();
+  if (name === 'clients') renderClientsList();
+  if (name === 'products') renderProductsList();
+  if (name === 'new-invoice') resetInvoiceForm();
+}
+
+/* ================= CLIENTS ================= */
+function addClient() {
+  const name = document.getElementById('clName').value.trim();
+  if (!name) return toast('Le nom est requis', true);
+  const client = {
+    id: Date.now(),
+    name,
+    phone: document.getElementById('clPhone').value.trim(),
+    address: document.getElementById('clAddress').value.trim()
+  };
+  clients.push(client);
+  DB.set('clients', clients);
+  ['clName','clPhone','clAddress'].forEach(id => document.getElementById(id).value = '');
+  renderClientsList();
+  refreshClientSelect();
+  toast('Client ajouté !');
+}
+
+function deleteClient(id) {
+  if (!confirm('Supprimer ce client ?')) return;
+  clients = clients.filter(c => c.id !== id);
+  DB.set('clients', clients);
+  renderClientsList();
+  refreshClientSelect();
+}
+
+function renderClientsList() {
+  const el = document.getElementById('clientsList');
+  if (!clients.length) { el.innerHTML = '<p class="empty-state">Aucun client enregistré.</p>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Nom</th><th>Téléphone</th><th>Adresse</th><th></th></tr></thead><tbody>
+    ${clients.map(c => `<tr>
+      <td><strong>${escapeHtml(c.name)}</strong></td>
+      <td>${escapeHtml(c.phone||'-')}</td>
+      <td>${escapeHtml(c.address||'-')}</td>
+      <td><button class="btn btn-danger" onclick="deleteClient(${c.id})">Suppr.</button></td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+function refreshClientSelect() {
+  const sel = document.getElementById('invClient');
+  const curr = sel.value;
+  sel.innerHTML = '<option value="">-- Sélectionner --</option>' + 
+    clients.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  if (clients.some(c => String(c.id) === curr)) sel.value = curr;
+}
+
+/* ================= PRODUCTS ================= */
+function addProduct() {
+  const name = document.getElementById('prName').value.trim();
+  const price = parseFloat(document.getElementById('prPrice').value);
+  if (!name) return toast('Désignation requise', true);
+  if (isNaN(price) || price < 0) return toast('Prix invalide', true);
+  products.push({ id: Date.now(), name, price, unit: document.getElementById('prUnit').value });
+  DB.set('products', products);
+  ['prName','prPrice'].forEach(id => document.getElementById(id).value = '');
+  renderProductsList();
+  toast('Produit ajouté !');
+}
+
+function deleteProduct(id) {
+  if (!confirm('Supprimer ce produit ?')) return;
+  products = products.filter(p => p.id !== id);
+  DB.set('products', products);
+  renderProductsList();
+}
+
+function renderProductsList() {
+  const el = document.getElementById('productsList');
+  if (!products.length) { el.innerHTML = '<p class="empty-state">Aucun produit enregistré.</p>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Désignation</th><th>Prix HT</th><th>Unité</th><th></th></tr></thead><tbody>
+    ${products.map(p => `<tr>
+      <td><strong>${escapeHtml(p.name)}</strong></td>
+      <td>${fmt(p.price)}</td>
+      <td>${escapeHtml(p.unit)}</td>
+      <td><button class="btn btn-danger" onclick="deleteProduct(${p.id})">Suppr.</button></td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+/* ================= INVOICE ITEMS ================= */
+function addItemRow(data = {}) {
+  const container = document.getElementById('itemsContainer');
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  
+  const prodOptions = '<option value="">-- produit --</option>' + 
+    products.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  
+  row.innerHTML = `
+    <input type="text" placeholder="Désignation" class="item-desc" value="${escapeHtml(data.desc||'')}">
+    <select class="item-product">${prodOptions}</select>
+    <input type="number" placeholder="Qté" class="item-qty" min="0" step="1" value="${data.qty||1}">
+    <input type="number" placeholder="Prix HT" class="item-price" min="0" step="1" value="${data.price||0}">
+    <button class="btn btn-danger" onclick="this.parentElement.remove(); recalc()">✕</button>
+  `;
+  container.appendChild(row);
+  
+  const sel = row.querySelector('.item-product');
+  sel.addEventListener('change', () => {
+    const p = products.find(x => x.id == sel.value);
+    if (p) {
+      row.querySelector('.item-desc').value = p.name;
+      row.querySelector('.item-price').value = p.price;
+      recalc();
+    }
+  });
+  
+  row.querySelectorAll('.item-qty, .item-price').forEach(i => i.addEventListener('input', recalc));
+  recalc();
+}
+
+function recalc() {
+  let subHT = 0;
+  document.querySelectorAll('#itemsContainer .item-row').forEach(row => {
+    const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+    subHT += qty * price;
+  });
+  const tvaRate = parseFloat(document.getElementById('invTVA').value) || 0;
+  const tva = subHT * tvaRate / 100;
+  document.getElementById('subHT').textContent = fmt(subHT);
+  document.getElementById('tvaAmount').textContent = fmt(tva);
+  document.getElementById('totalTTC').textContent = fmt(subHT + tva);
+}
+
+function resetInvoiceForm() {
+  document.getElementById('invNumber').value = 'FA-' + new Date().getFullYear() + '-' + String(invoices.length + 1).padStart(4, '0');
+  document.getElementById('invDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('invClient').value = '';
+  document.getElementById('invNotes').value = '';
+  document.getElementById('itemsContainer').innerHTML = '';
+  addItemRow();
+  recalc();
+  refreshClientSelect();
+}
+
+/* ================= GENERATE INVOICE ================= */
+function generateInvoice() {
+  const clientId = document.getElementById('invClient').value;
+  if (!clientId) return toast('Sélectionnez un client', true);
+  
+  const items = [];
+  document.querySelectorAll('#itemsContainer .item-row').forEach(row => {
+    const desc = row.querySelector('.item-desc').value.trim();
+    const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+    const price = parseFloat(row.querySelector('.item-price').value) || 0;
+    if (desc && qty > 0) items.push({ desc, qty, price });
+  });
+  
+  if (!items.length) return toast('Ajoutez au moins un article', true);
+  
+  const client = clients.find(c => c.id == clientId);
+  const tvaRate = parseFloat(document.getElementById('invTVA').value) || 0;
+  const subHT = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const tva = subHT * tvaRate / 100;
+  
+  const invoice = {
+    id: Date.now(),
+    number: document.getElementById('invNumber').value,
+    date: document.getElementById('invDate').value,
+    client,
+    items,
+    tvaRate,
+    subHT,
+    tva,
+    total: subHT + tva,
+    notes: document.getElementById('invNotes').value.trim(),
+    store: {...settings}
+  };
+  
+  invoices.push(invoice);
+  DB.set('invoices', invoices);
+  toast('Facture enregistrée !');
+  showInvoice(invoice);
+}
+
+/* ================= RENDER INVOICE ================= */
+function showInvoice(inv) {
+  const s = inv.store || settings;
+  const html = `
+  <div class="invoice-preview">
+    <div class="invoice-header">
+      <div>
+        <h2>FACTURE</h2>
+        <p><strong>${escapeHtml(inv.number)}</strong></p>
+        <p style="color:#888;font-size:0.9rem">Date : ${new Date(inv.date).toLocaleDateString('fr-FR')}</p>
+      </div>
+      <div style="text-align:right">
+        <div class="brand">${escapeHtml(s.storeName)}</div>
+        <p style="font-size:0.85rem">Tél : ${escapeHtml(s.storePhone)}</p>
+        ${s.storeAddress ? `<p style="font-size:0.85rem;max-width:250px;margin-left:auto">${escapeHtml(s.storeAddress)}</p>` : ''}
+        ${s.storeEmail ? `<p style="font-size:0.85rem">${escapeHtml(s.storeEmail)}</p>` : ''}
+      </div>
+    </div>
+    
+    <div class="invoice-info">
+      <div>
+        <h4>Facturé à</h4>
+        <p><strong>${escapeHtml(inv.client.name)}</strong></p>
+        ${inv.client.address ? `<p>${escapeHtml(inv.client.address)}</p>` : ''}
+        ${inv.client.phone ? `<p>Tél : ${escapeHtml(inv.client.phone)}</p>` : ''}
+      </div>
+      <div>
+        <h4>Détails</h4>
+        <p>N° : ${escapeHtml(inv.number)}</p>
+        <p>Date : ${new Date(inv.date).toLocaleDateString('fr-FR')}</p>
+        <p>TVA : ${inv.tvaRate}%</p>
+      </div>
+    </div>
+    
+    <table class="invoice-table">
+      <thead><tr><th>Désignation</th><th style="text-align:right">Qté</th><th style="text-align:right">Prix HT</th><th style="text-align:right">Total HT</th></tr></thead>
+      <tbody>
+        ${inv.items.map(i => `<tr>
+          <td>${escapeHtml(i.desc)}</td>
+          <td style="text-align:right">${i.qty}</td>
+          <td style="text-align:right">${fmt(i.price)}</td>
+          <td style="text-align:right">${fmt(i.qty * i.price)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    
+    <div class="invoice-totals">
+      <div class="line"><span>Sous-total HT :</span> <span>${fmt(inv.subHT)}</span></div>
+      <div class="line"><span>TVA (${inv.tvaRate}%) :</span> <span>${fmt(inv.tva)}</span></div>
+      <div class="line total"><span>Total TTC :</span> <span>${fmt(inv.total)}</span></div>
+    </div>
+    
+    ${inv.notes ? `<div style="margin-top:25px;padding-top:15px;border-top:1px solid #eee;font-size:0.85rem;color:#666"><strong>Notes :</strong><br>${escapeHtml(inv.notes)}</div>` : ''}
+    
+    <div class="signature-zone">
+      <div>
+        <div class="signature-label">Signature du client</div>
+        <div class="signature-line">Lu et approuvé</div>
+      </div>
+      <div style="text-align:center">
+        <div class="stamp">
+          <div class="stamp-top">★ SALIOU QUINCAILLERIE ★</div>
+          <div class="stamp-main">${escapeHtml(s.stampText || 'Saliou&Frères')}</div>
+          <div class="stamp-bottom">Tél : ${escapeHtml(s.storePhone)}</div>
+          <div class="stamp-address">Tamba - Gourel Diadié</div>
+        </div>
+      </div>
+    </div>
+    
+    <p style="text-align:center;margin-top:30px;color:#aaa;font-size:0.8rem">Merci de votre confiance !</p>
+  </div>`;
+  
+  document.getElementById('invoiceRender').innerHTML = html;
+  switchTab('invoice-view');
+}
+
+/* ================= INVOICES LIST ================= */
+function renderInvoicesList() {
+  const el = document.getElementById('invoicesList');
+  if (!invoices.length) { el.innerHTML = '<p class="empty-state">Aucune facture enregistrée.</p>'; return; }
+  
+  const sorted = [...invoices].reverse();
+  el.innerHTML = `<table><thead><tr>
+    <th>N°</th><th>Date</th><th>Client</th><th>Total TTC</th><th>Actions</th>
+  </tr></thead><tbody>
+    ${sorted.map(i => `<tr>
+      <td><strong>${escapeHtml(i.number)}</strong></td>
+      <td>${new Date(i.date).toLocaleDateString('fr-FR')}</td>
+      <td>${escapeHtml(i.client.name)}</td>
+      <td><strong>${fmt(i.total)}</strong></td>
+      <td>
+        <button class="btn btn-secondary btn-small" onclick="viewInvoiceById(${i.id})">Voir</button>
+        <button class="btn btn-danger" onclick="deleteInvoice(${i.id})">Suppr.</button>
+      </td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+function viewInvoiceById(id) {
+  const inv = invoices.find(i => i.id === id);
+  if (inv) showInvoice(inv);
+}
+
+function deleteInvoice(id) {
+  if (!confirm('Supprimer cette facture ?')) return;
+  invoices = invoices.filter(i => i.id !== id);
+  DB.set('invoices', invoices);
+  renderInvoicesList();
+}
+
+/* ================= SETTINGS ================= */
+function openSettings() {
+  const name = prompt('Nom de la boutique :', settings.storeName);
+  if (name === null) return;
+  const phone = prompt('Téléphone :', settings.storePhone);
+  const addr = prompt('Adresse :', settings.storeAddress);
+  const stamp = prompt('Texte du cachet :', settings.stampText);
+  settings = {
+    storeName: name,
+    storePhone: phone || '',
+    storeAddress: addr || '',
+    storeEmail: settings.storeEmail || '',
+    stampText: stamp || 'Saliou&Frères'
+  };
+  DB.set('settings', settings);
+  toast('Paramètres enregistrés !');
+}
+
+/* ================= INIT ================= */
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('invTVA').addEventListener('input', recalc);
+  refreshClientSelect();
+  resetInvoiceForm();
+});
+</script>
+</body>
+</html>
